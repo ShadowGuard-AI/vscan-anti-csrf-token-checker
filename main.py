@@ -42,7 +42,9 @@ def get_forms(url):
         url (str): The URL to retrieve forms from.
 
     Returns:
-        list: A list of BeautifulSoup form elements.  Returns an empty list if no forms found or an error occurs.
+        list or None: A list of BeautifulSoup form elements, empty when the
+        fetched page has no forms. Returns None when the fetch or the parse
+        fails, so a failed fetch is never reported as a page with no forms.
     """
     try:
         response = requests.get(url, timeout=10) # Added timeout for safety
@@ -52,10 +54,10 @@ def get_forms(url):
         return forms
     except requests.exceptions.RequestException as e:
         logging.error(f"Error fetching URL: {e}")
-        return [] # Return empty list if request fails
+        return None # Fetch failed: distinct from a fetched page with no forms
     except Exception as e:
         logging.error(f"Error parsing HTML: {e}")
-        return [] # Return empty list if parsing fails
+        return None # Parse failed: distinct from a fetched page with no forms
 
 def analyze_form(form, url):
     """
@@ -117,6 +119,10 @@ def main():
     logging.info(f"Analyzing URL: {url}")
 
     forms = get_forms(url)
+
+    if forms is None:
+        logging.error("Fetch failure: the page could not be retrieved, so no CSRF check was performed.")
+        sys.exit(1)
 
     if not forms:
         logging.info("No forms found on the page.")

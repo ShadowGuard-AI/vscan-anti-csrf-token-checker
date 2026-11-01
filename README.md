@@ -13,3 +13,6 @@ Analyzes HTML forms to determine if anti-CSRF tokens are present and correctly i
 
 ## License
 Copyright (c) ShadowGuardAI
+
+## Notes
+- If the page cannot be fetched, the tool prints a fetch failure line and exits 1: a failed fetch is not a finding of no forms. A fetched page with no forms prints "No forms found on the page." and exits 0.
