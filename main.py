@@ -73,6 +73,8 @@ def analyze_form(form, url):
               Returns None if an error occurs.
     """
     try:
+        # The method is recorded and never weighed. A GET form draws the same missing token
+        # warning below as a POST form, though only one of them changes state anywhere.
         method = form.get('method', 'GET').upper()
         action = form.get('action', url)
 
@@ -84,6 +86,9 @@ def analyze_form(form, url):
             if input_field.get('type') == 'hidden':
                 # Check if the input field name looks like a CSRF token
                 name = input_field.get('name')
+                # A name match is all I ask for. A hidden field called token with an empty value,
+                # or one the server never checks, passes this test completely, and a token carried
+                # in a cookie or a header instead of a hidden field reads as no token at all.
                 if name and re.search(r"(csrf|token|xsrf|authenticity)", name, re.IGNORECASE):
                     csrf_token_field = name
                     break
@@ -139,6 +144,8 @@ def main():
                 logging.info(f"  CSRF Token Present: Yes (Name: {analysis_result['token_name']})")
             else:
                 logging.warning("  CSRF Token Present: No")
+                # A warning is the whole consequence. Every run of this tool exits 0 unless the fetch
+                # itself failed, so a caller has to read the log to learn a form was flagged.
                 logging.warning("  Potential CSRF vulnerability found!")
         else:
             logging.error(f"  Failed to analyze form {i+1}")
